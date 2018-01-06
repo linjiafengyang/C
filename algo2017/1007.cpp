@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm> 
 using namespace std;
+// 超时
 // class Solution {
 // public:
 //     int minLeftMonsters(vector<vector<char> > G) {
@@ -137,6 +138,83 @@ public:
         order.push_back(v);
     }
 };
+// another solution
+class Solution {
+private:
+    vector<int> pre, lowlink, sccno;
+    stack<int> S;
+    vector< vector<int> > V;
+    vector<bool> vis;
+    int dfs_clock, scc_cnt;
+    void dfs(int u)
+    {
+        pre[u] = lowlink[u] = ++ dfs_clock;
+        S.push(u);
+        for (int i=0; i<V[u].size(); i++)
+        {
+            int v = V[u][i];
+            if (!pre[v])
+            {
+                dfs(v);
+                lowlink[u] = min(lowlink[u], lowlink[v]);
+            }
+            else if (!sccno[v]) lowlink[u] = min(lowlink[u], pre[v]);
+        }
+        if (lowlink[u] == pre[u])
+        {
+            scc_cnt ++;
+            for (;;)
+            {
+                int x = S.top();
+                S.pop();
+                sccno[x] = scc_cnt;
+                if (x == u) break;
+            }
+        }
+    }
+    void find_scc(int n)
+    {
+        dfs_clock = scc_cnt = 0;
+        for (int i=0; i<n; i++) sccno[i] = pre[i] = 0;
+        for (int i=0; i<n; i++) if (!pre[i]) dfs(i);
+    }
+public:
+    int minLeftMonsters(vector< vector<char> > G) {
+        int res, n, x, i, j;
+        n = G.size();
+        V.resize(n);
+        pre.resize(n);
+        lowlink.resize(n);
+        sccno.resize(n);
+        vis.resize(n + 1);
+        for (i=0; i<n; i++)
+            for (j=0; j<n; j++)
+                if (G[i][j] == '-') V[i].push_back(j);
+        find_scc(n);
+        for (i=1; i<=scc_cnt; i++) vis[i] = false;
+        res = scc_cnt;
+        for (i=0; i<n; i++)
+            for (j=0; j<V[i].size(); j++)
+            {
+                x = sccno[V[i][j]];
+                if (x == sccno[i]) continue;
+                if (!vis[x])
+                {
+                    res --;
+                    vis[x] = true;
+                }
+            }
+        for (i=0; i<n; i++) V[i].clear();
+        V.clear();
+        pre.clear();
+        lowlink.clear();
+        sccno.clear();
+        vis.clear();
+        while (!S.empty()) S.pop();
+        return res; 
+    }
+};
+
 
 int main() {
     Solution solution;
